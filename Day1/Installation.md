@@ -16,7 +16,7 @@ The different tasks are stitched together with the workflow management system [l
 
 ### installation
 
-We will need space for the environment (Z10Gb), framework and training data, in general ~50Gb. On lxplus it's advised to use `/eos` instead of limited `/afs`.
+We will need space for the environment (~10Gb), framework and training data, in general ~50Gb. On lxplus it's advised to use `/eos` instead of limited `/afs`.
 For installation of environment we recommend using mamba. If you don't have it you may install miniforge3 (more details [here]([url](https://github.com/conda-forge/miniforge))):
 
 ```bash

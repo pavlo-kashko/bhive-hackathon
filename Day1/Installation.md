@@ -19,15 +19,6 @@ The different tasks are stitched together with the workflow management system [l
 We will need space for the environment (~10Gb), framework and training data, in general ~50Gb. On lxplus it's advised to use `/eos` instead of limited `/afs`.
 For installation of environment we recommend using mamba. If you don't have it you may install miniforge3 (more details [here]([url](https://github.com/conda-forge/miniforge))):
 
-??? quote "Previous conveners"
-
-    - May 2024 - present: Pavlo Kashko (VUB)
-    - September 2024 - present: Nurfikri Norjoharuddeen (Helsinki Institute of Physics)
-    - September 2023 - August 2024: Ming-Yan Lee (RWTH Aachen), Sen Deng (Peking University)
-    - September 2021 - August 2023: Alexandre de Moor (VUB), Denis Mueller (VUB)
-    - More [here](https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagPOG)
-
-
 ```bash
 curl -L -O "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh"
 bash Miniforge3-$(uname)-$(uname -m).sh

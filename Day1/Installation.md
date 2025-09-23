@@ -1,20 +1,26 @@
 # bhive-hackathon
 
+b-hive is a framework for Machine Learning tasks on flat root files. It aims to provide full pipelines form dataset export to evaluation with state-of-the-art taggers, like ParticleNet and ParticleTransformer. For questions, please contact the [b-hive-contact](ulrich.willemsen@cern.ch).
+### Join the [Mattermost-Channel!](https://mattermost.web.cern.ch/cms-exp/pl/ft4fewfa4b86t8z8nsza7taq1a)
+
+
 ## b-hive
 
-b-hive is a framework for Machine Learning tasks on flat root files. It aims to provide full pipelines form dataset export to evaluation with state-of-the-art taggers, like ParticleNet and ParticleTransformer. For questions, please contact the [b-hive-contact](ulrich.willemsen@cern.ch)
+Developing and deploying jet/event tagging algorithms in the realm of high-energy physics (HEP) can be a complex endeavor, often hindered by application-specific obstacles such as processing large datasets in `root` format, efficient ML specific data provisioning, and accurate performance evaluation. To address these challenges, the **b-hive** framework provides a streamlined, modular, and collaborative environment designed to simplify and enhance the workflow of HEP researchers. 
 
+A key feature of **b-hive** is that its top-level code is agnostic to specific applications. Instead of embedding details directly, **b-hive** uses modules such as:
 
-## Join the [Mattermost-Channel!](https://mattermost.web.cern.ch/cms-exp/pl/ft4fewfa4b86t8z8nsza7taq1a)
+- **Model Type:** Neural network architectures or ML frameworks like `PyTorch`.
+- **Model Parameters:** Hyperparameters like learning rate, batch size, optimizer, etc.
+- **Physics Selection:** Event selections or `coffea` processes.
+- **Kinematic Phase Space Selection:** e.g. $p_T > 30\,\mathrm{GeV}$ or angular distributions in terms of $\eta$.
+
 
 ## Setup
 
-The codebase is python based, using tools like [awkward](https://awkward-array.org/doc/main/), [uproot](https://uproot.readthedocs.io/en/latest/)
-for reading in the root-files and [numpy](https://numpy.org), [PyTorch](https://pytorch.org)
-for the training.
-The different tasks are stitched together with the workflow management system [law](https://law.readthedocs.io/en/latest/).
+The codebase is python based, using tools like [awkward](https://awkward-array.org/doc/main/), [uproot](https://uproot.readthedocs.io/en/latest/) for reading in the root-files and [numpy](https://numpy.org), [PyTorch](https://pytorch.org) for the training. The different tasks are stitched together with the workflow management system [law](https://law.readthedocs.io/en/latest/).
 
-### installation
+### Microforge3 (optional)
 
 We will need space for the environment (~10Gb), framework and training data, in general ~50Gb. On lxplus it's advised to use `/eos` instead of limited `/afs`.
 For installation of environment we recommend using mamba. If you don't have it you may install miniforge3 (more details [here]([url](https://github.com/conda-forge/miniforge))):
@@ -24,6 +30,8 @@ curl -L -O "https://github.com/conda-forge/miniforge/releases/latest/download/Mi
 bash Miniforge3-$(uname)-$(uname -m).sh
 ```
 
+### Cloning repository
+
 Clone the repository via gitlab. You may use either ssh or https. Also you will be rewuired to enter your CERN credentials (username and password):
 
 ```bash
@@ -32,6 +40,8 @@ git clone https://git@gitlab.cern.ch:7999/cms-btv/b-hive.git
 cd b-hive
 ```
 
+### Setting environment
+
 Next, install the needed python environment via [mamba](https://mamba.readthedocs.io/en/latest/user_guide/mamba.html) (or conda). This will take around :
 
 ```bash
@@ -39,14 +49,13 @@ mamba env create -n b_hive -f env.yml
 mamba activate b_hive
 ```
 
-Next, some environment variables need to be configured. These should be put inside
-the `local_setup.sh`, which is ignored by git, but used by the `setup.sh`. The variable
-`$DATA_PATH` specifies, where the outputs will be written to (we recommend folder output inside b-hive repository). Thus, chose a directory, where you
-have sufficient space!
+Next, some environment variables need to be configured. These should be put inside the `local_setup.sh`, which is ignored by git, but used by the `setup.sh`. The variables `$DATA_PATH` and `$TESTDIRECTORY` specifies, where the outputs and test files will be written to (we recommend folder output inside b-hive repository). Thus, chose a directory, where you have sufficient space!
 
 ```bash
 # example local_setup.sh
-export DATA_PATH=/net/scratch/myUserName/b-hive/output/
+export DATA_PATH=/path/to/folder/b-hive/output/
+export LXUSERNAME=cern_username
+export TESTDIRECTORY=/eos/user/p/pkashko/b_hive_fix/b-hive/tests/
 ```
 
 Now source the setup-script to set up the environment everything:
@@ -57,7 +66,19 @@ source setup.sh
 # init law tasks (needed to be executed only once!)
 law index
 ```
+
 ## Tutorial
+
+The preparation and utilization of the jet/event tagging models required several main steps defined as tasks in the **b-hive** architecture (see Fig. [bhive_structure]):
+
+- **DatasetConstructorTask**: creating a prepared and cleaned dataset in compressed format from Monte Carlo simulation typically saved in `root` files.
+- **TrainingTask**: the direct updating of the model's parameters using the prepared dataset in order to improve accuracy and decrease loss.
+- **InferenceTask**: the evaluation of the trained model's performance, typically on the independent dataset (an additional DatasetConstructorTask should be run here or will be requested by the `law` pipeline).
+- **ROCCurveTask**: using predictions of the classes from the inference step to plot the Receiver Operating Characteristic (ROC) curve, showing the background rejection for different signal efficiencies.
+
+
+The orchestration of tasks within **b-hive** is managed by the **LAW** (Luigi Analysis Workflow) Python package [[law]](https://law.readthedocs.io/en/latest/#).
+
 
 ### List tasks
 
@@ -104,7 +125,7 @@ module 'tasks.input_plotter', 2 task(s):
     - InputHistogrammerTask
     - HistogramPlotterTask
 
-written 11 task(s) to index file '/eos/user/p/pkashko/b_hive_fix/b-hive/.law/index'
+written 11 task(s) to index file '/path/to/folder/b-hive/.law/index'
 
 ```
 
@@ -124,11 +145,8 @@ This shows us all taks that are at hand:
     - creates histograms of input features
 - HistogramPlotterTask
     - plot histograms of input features
-- ~~DeepJetRun~~ 
-    - full pipeline
 
-all these need to be in files that are specified in the `law.cfg`. Task that are in the `tasks` directory, are basic tasks, whereas the `workflows` directory specifies full training pipelines,
-with the necessary parameters set.
+all these need to be in files that are specified in the `law.cfg`. Task that are in the `tasks` directory, are basic tasks, whereas the `workflows` directory specifies full training pipelines, with the necessary parameters set.
 
 ### DatasetConstructorTask
 
@@ -165,8 +183,7 @@ or you can try put
 ```bash
 law run DatasetConstructorTask --help
 ```
-to receive an extensive list. Some of these parameters are by law, whereas others are defined in
-b-hive.
+to receive an extensive list. Some of these parameters are by law, whereas others are defined in b-hive.
 
 Let's explain some parameters:
  - --config 
@@ -270,7 +287,7 @@ All branches that are specified in the config are exported. The different models
 ### Running a Training
 
 Test files are saved in `/eos/cms/store/group/phys_btag/b-hive/test_files/data`. You can download these and then run a training.
-The HLT test-files should be used with the `hlt_run3` config, ~~whereas the offline ones with the `offline_run3` config~~TODO!.
+The HLT test-files should be used with the `hlt_run3` config, whereas offline may utilize `part_run3_lt`.
 
 Download the files via:
 ```bash
